@@ -1,0 +1,15 @@
+artifact_uri: file:///home/leoasad/code/leonardo-asad/TaxiFareModel/mlruns/1/ffd9b3d111e344a5acde3234cfc82fb8/artifacts
+end_time: null
+entry_point_name: ''
+experiment_id: '1'
+lifecycle_stage: active
+name: ''
+run_id: ffd9b3d111e344a5acde3234cfc82fb8
+run_uuid: ffd9b3d111e344a5acde3234cfc82fb8
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1646159938277
+status: 1
+tags: []
+user_id: unknown
