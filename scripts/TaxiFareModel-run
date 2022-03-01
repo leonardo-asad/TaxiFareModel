@@ -1,2 +1,34 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
+from TaxiFareModel.data import get_data
+from TaxiFareModel.data import clean_data
+
+from TaxiFareModel.trainer import Trainer
+
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import Lasso
+from sklearn.linear_model import Ridge
+
+
+df = get_data()
+# clean data
+df = clean_data(df)
+# set X and y
+y = df.pop('fare_amount')
+X = df
+# hold out
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+
+for estimator in [Lasso(), Ridge()]:
+    # train
+    # Instanciate the class
+    trainer = Trainer(X_train, y_train)
+    # Cross Validate
+    neg_rmse = trainer.cross_validate(estimator=estimator)
+
+    # Log estimator and rmse
+    trainer.mlflow_log_metric('Negative Root Mean Squared Error', neg_rmse)
+    trainer.mlflow_log_param('estimator', str(estimator))
+
+print(neg_rmse)

@@ -14,10 +14,14 @@ from sklearn.compose import make_column_transformer
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
+from sklearn.model_selection import cross_val_score
+from sklearn.metrics import mean_squared_error
 
 import mlflow
 from mlflow.tracking import MlflowClient
 from memoized_property import memoized_property
+
+import joblib
 
 
 MLFLOW_URI = "https://mlflow.lewagon.co/"
@@ -34,7 +38,7 @@ class Trainer():
         self.experiment_name = "[AR] [BUENOS AIRES] [LeoA] TaxiFareModel v1"
 
 
-    def set_pipeline(self):
+    def set_pipeline(self, estimator):
         """defines the pipeline as a class attribute"""
         # Preprocesing Pipeline
         # Distance preprocessing
@@ -51,23 +55,35 @@ class Trainer():
         )
 
         # Model Pipeline
-        pipe = make_pipeline(preproc_pipe, LinearRegression())
+        pipe = make_pipeline(preproc_pipe, estimator)
 
         # Define the pipeline object as a class atribute
         self.pipeline = pipe
 
 
-    def run(self):
+    def run(self, estimator=LinearRegression()):
         """set and train the pipeline"""
-        self.set_pipeline()
+        self.set_pipeline(estimator)
         self.pipeline.fit(self.X, self.y)
         return self.pipeline
+
+
 
     def evaluate(self, X_test, y_test):
         """evaluates the pipeline on df_test and return the RMSE"""
         y_pred = self.pipeline.predict(X_test)
         rmse = compute_rmse(y_pred, y_test)
         return rmse
+
+    def cross_validate(self, estimator=LinearRegression(), scoring='neg_root_mean_squared_error'):
+        self.set_pipeline(estimator)
+        res = cross_val_score(estimator=self.pipeline,
+                              X=self.X,
+                              y=self.y,
+                              scoring=scoring,
+                              cv=5,
+                              n_jobs=-1)
+        return res.mean()
 
 
     @memoized_property
@@ -91,6 +107,10 @@ class Trainer():
 
     def mlflow_log_metric(self, key, value):
         self.mlflow_client.log_metric(self.mlflow_run.info.run_id, key, value)
+
+    def save_model(self):
+        """ Save the trained model into a model.joblib file """
+        joblib.dump(self.pipeline, 'model.joblib')
 
 
 if __name__ == "__main__":
@@ -117,4 +137,8 @@ if __name__ == "__main__":
 
     # Retrive the id to find the experiment
     experiment_id = trainer.mlflow_experiment_id
+
+    # Save model
+    trainer.save_model()
+
     print(f"experiment URL: https://mlflow.lewagon.co/#/experiments/{experiment_id}")
